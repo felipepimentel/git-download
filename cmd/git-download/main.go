@@ -23,28 +23,37 @@ file to track repositories and their sync status.`,
 }
 
 var initCmd = &cobra.Command{
-	Use:   "init",
+	Use:   "init [url]",
 	Short: "Initialize a new repository sync",
-	Long:  `Initialize a new repository for syncing by providing the repository URL, branch/tag, and destination.`,
+	Long: `Initialize a new repository for syncing by providing the repository URL.
+All other parameters are optional with smart defaults:
+  - ref: "main"
+  - ref-type: "branch"
+  - destination: current directory + repository name
+  - name: extracted from URL
+
+Example: git-download init https://github.com/user/repo`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		url, _ := cmd.Flags().GetString("url")
+		url := args[0]
 		ref, _ := cmd.Flags().GetString("ref")
 		refType, _ := cmd.Flags().GetString("ref-type")
 		dest, _ := cmd.Flags().GetString("destination")
 		name, _ := cmd.Flags().GetString("name")
 
-		if url == "" {
-			return fmt.Errorf("URL is required")
+		// Extract repo name from URL if not provided
+		if name == "" {
+			name = filepath.Base(url)
+		}
+
+		// If destination is not provided, use current directory + repo name
+		if dest == "" {
+			dest = filepath.Join(".", name)
 		}
 
 		// Validate ref type
 		if refType != "" && refType != "branch" && refType != "tag" {
 			return fmt.Errorf("ref-type must be either 'branch' or 'tag'")
-		}
-
-		// If name is not provided, extract it from the URL
-		if name == "" {
-			name = filepath.Base(url)
 		}
 
 		// Load or create metadata
@@ -70,6 +79,8 @@ var initCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Repository '%s' initialized successfully\n", name)
+		fmt.Printf("Destination: %s\n", dest)
+		fmt.Printf("Reference: %s (%s)\n", ref, refType)
 		return nil
 	},
 }
@@ -205,12 +216,11 @@ func syncRepository(repo *metadata.RepositoryMetadata, meta *metadata.SyncMetada
 }
 
 func init() {
-	// Init command flags
-	initCmd.Flags().String("url", "", "Repository URL (required)")
-	initCmd.Flags().String("ref", "main", "Repository reference (branch or tag)")
+	// Init command flags (all optional with defaults)
+	initCmd.Flags().String("ref", "main", "Repository reference (branch name or tag)")
 	initCmd.Flags().String("ref-type", "branch", "Reference type ('branch' or 'tag')")
-	initCmd.Flags().String("destination", "", "Local destination path")
-	initCmd.Flags().String("name", "", "Repository name (defaults to URL basename)")
+	initCmd.Flags().String("destination", "", "Local destination path (default: ./<repo-name>)")
+	initCmd.Flags().String("name", "", "Repository name (default: extracted from URL)")
 
 	// Sync command flags
 	syncCmd.Flags().String("name", "", "Repository name to sync (if empty, syncs all)")

@@ -85,22 +85,32 @@ Download the appropriate binary for your system from the [Releases](https://gith
 
 ### Initialize a Repository
 
-Using a branch:
+Simple usage (with defaults):
 ```bash
-git-download init --url https://github.com/user/repo --ref main --ref-type branch --destination ./local-folder
+git-download init https://github.com/user/repo
+```
+This will:
+- Use "main" as the default branch
+- Create a directory with the repository name in the current path
+- Use the repository name from the URL
+
+Advanced usage with options:
+```bash
+# Using a specific branch
+git-download init https://github.com/user/repo --ref develop
+
+# Using a specific tag
+git-download init https://github.com/user/repo --ref v1.0.0 --ref-type tag
+
+# Custom destination and name
+git-download init https://github.com/user/repo --destination ./custom/path --name custom-name
 ```
 
-Using a tag:
-```bash
-git-download init --url https://github.com/user/repo --ref v1.0.0 --ref-type tag --destination ./local-folder
-```
-
-Options:
-- `--url`: Repository URL (required)
+Available options:
 - `--ref`: Repository reference (branch name or tag, default: "main")
 - `--ref-type`: Type of reference ("branch" or "tag", default: "branch")
-- `--destination`: Local destination path
-- `--name`: Custom name for the repository (defaults to URL basename)
+- `--destination`: Local destination path (default: ./<repo-name>)
+- `--name`: Custom name for the repository (default: extracted from URL)
 
 ### Sync Repositories
 
